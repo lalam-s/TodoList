@@ -46,7 +46,7 @@ class _TodoListState extends State<TodoList> {
                   ),
                 ),
               ),
-              Expanded(
+              Flexible(
                 flex: 1,
                 child: Container(
                   child: ListView.builder(
@@ -91,7 +91,7 @@ class _TodoListState extends State<TodoList> {
                     )
                   : Container(),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
                   child: ListView.builder(
                       shrinkWrap: true,
@@ -105,7 +105,8 @@ class _TodoListState extends State<TodoList> {
                                 utf8.decode(cx[index]["title"]),
                                 style: TextStyle(
                                     decoration: TextDecoration.lineThrough,
-                                    fontSize: 22),
+                                    fontSize: 22,
+                                    color: Colors.grey),
                               ),
                             ),
                             onLongPress: () async {
@@ -118,14 +119,7 @@ class _TodoListState extends State<TodoList> {
                               }
                             },
                             onTap: () async {
-                              var y = await completed(cx[index]["id"], 0);
-                              if (y) {
-                                print("hello");
-                                final snackbar = SnackBar(
-                                    content:
-                                        Text("1 item is marked incomplete"));
-                                Scaffold.of(context).showSnackBar(snackbar);
-                              }
+                              await completed(cx[index]["id"], 0);
                             });
                       }),
                 ),

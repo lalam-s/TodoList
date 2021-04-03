@@ -11,7 +11,7 @@ Widget CBottomBar(context) {
           IconButton(
               icon: Icon(
                 Icons.menu,
-                size: 36,
+                size: 30,
                 color: Colors.black,
               ),
               onPressed: () {
@@ -20,7 +20,7 @@ Widget CBottomBar(context) {
           IconButton(
               icon: Icon(
                 Icons.more_vert,
-                size: 36,
+                size: 30,
                 color: Colors.black,
               ),
               onPressed: () {
