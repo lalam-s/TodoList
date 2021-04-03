@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../Db/TodoDBHandler.dart';
-import 'dart:convert';
 
-Widget Fab(double height, double width) {
+import '../Db/Todo.dart';
+
+Widget Fab(double height, double width, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.all(4.0),
     child: Container(
@@ -10,12 +11,7 @@ Widget Fab(double height, double width) {
       width: width,
       child: FloatingActionButton(
         onPressed: () async {
-          var todoDB = TodoDBHandler();
-          var x = await todoDB.selectAllTodos();
-          var l = [];
-          for (Map<String, dynamic> data in x) {
-            l.add(data["id"]);
-          }
+          await displayTextInputDialog(context);
         },
         tooltip: 'Add Task',
         child: Icon(
@@ -28,4 +24,44 @@ Widget Fab(double height, double width) {
       ),
     ),
   );
+}
+
+Future<void> displayTextInputDialog(context) {
+  TextEditingController _controller = TextEditingController();
+  return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("My Tasks"),
+          content: TextField(
+            autofocus: true,
+            controller: _controller,
+            decoration: InputDecoration(hintText: "enter todo"),
+          ),
+          actions: [
+            FlatButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("Cancel")),
+            FlatButton(
+                onPressed: () {
+                  if (_controller.text.length > 0) {
+                    var todoDB = TodoDBHandler();
+                    var todo = Todo(-1, _controller.text, "", 0);
+                    print(todo);
+                    Future<int> id = todoDB.insertTodo(todo, true);
+                    id.then((value) async {
+                      todo.id = value;
+                    });
+                    _controller.text = "";
+                    print(todo);
+                  }
+
+                  Navigator.pop(context);
+                },
+                child: Text("Ok")),
+          ],
+        );
+      });
 }

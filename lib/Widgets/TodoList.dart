@@ -31,83 +31,119 @@ class _TodoListState extends State<TodoList> {
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height * 0.15;
     var width = MediaQuery.of(context).size.width * 0.15;
-    return Scaffold(
-      body: Container(
-        child: Column(
-          children: [
-            Center(
-              child: TextField(
-                controller: _controller,
-                onSubmitted: (String value) async {
-                  if (value.length > 0) {
-                    var todoDB = TodoDBHandler();
-                    var todo = Todo(-1, value, "", 0);
-                    print(todo);
-                    Future<int> id = todoDB.insertTodo(todo, true);
-                    id.then((value) async {
-                      todo.id = value;
-                      updatex();
-                    });
-                    _controller.text = "";
-                    print(todo);
-                  }
-                },
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "Enter Todo",
+    return SafeArea(
+      child: Scaffold(
+        body: Container(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 32, bottom: 8, top: 8),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    "My Tasks",
+                    style: TextStyle(fontSize: height / 3),
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: SizedBox(
-                height: 400,
-                child: ListView.builder(
-                    itemCount: l,
-                    itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                          child: Text(
-                            utf8.decode(x[index]["title"]),
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          onTap: () async {
-                            completed(x[index]["id"], 1);
-                          });
-                    }),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: l,
+                      itemBuilder: (BuildContext context, int index) {
+                        return GestureDetector(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 16, bottom: 8, top: 8, right: 8),
+                              child: Text(
+                                utf8.decode(x[index]["title"]),
+                                style: TextStyle(fontSize: 22),
+                              ),
+                            ),
+                            onTap: () async {
+                              var y = await completed(x[index]["id"], 1);
+                              if (y) {
+                                print("hello");
+                                final snackbar = SnackBar(
+                                    content: Text("1 item is marked complete"));
+                                Scaffold.of(context).showSnackBar(snackbar);
+                              }
+                            });
+                      }),
+                ),
               ),
-            ),
-            Divider(),
-            Expanded(
-              child: SizedBox(
-                height: 400,
-                child: ListView.builder(
-                    itemCount: cl,
-                    itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                          child: Text(
-                            utf8.decode(cx[index]["title"]),
-                            style: TextStyle(
-                                decoration: TextDecoration.lineThrough,
-                                fontSize: 20),
-                          ),
-                          onTap: () async {
-                            completed(cx[index]["id"], 0);
-                          });
-                    }),
-              ),
-            )
-          ],
+              Divider(),
+              cl > 0
+                  ? Padding(
+                      padding:
+                          const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          "Completed(${cl})",
+                          style: TextStyle(
+                              fontSize: height / 6,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    )
+                  : Container(),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: cl,
+                      itemBuilder: (BuildContext context, int index) {
+                        return GestureDetector(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 16, bottom: 8, top: 8, right: 8),
+                              child: Text(
+                                utf8.decode(cx[index]["title"]),
+                                style: TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    fontSize: 22),
+                              ),
+                            ),
+                            onLongPress: () async {
+                              var y = await delete(cx[index]["id"]);
+                              if (y) {
+                                print("hello");
+                                final snackbar = SnackBar(
+                                    content: Text("1 item is deleted"));
+                                Scaffold.of(context).showSnackBar(snackbar);
+                              }
+                            },
+                            onTap: () async {
+                              var y = await completed(cx[index]["id"], 0);
+                              if (y) {
+                                print("hello");
+                                final snackbar = SnackBar(
+                                    content:
+                                        Text("1 item is marked incomplete"));
+                                Scaffold.of(context).showSnackBar(snackbar);
+                              }
+                            });
+                      }),
+                ),
+              )
+            ],
+          ),
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: Fab(height, width, context),
+        bottomNavigationBar: CBottomBar(context),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Fab(height, width),
-      bottomNavigationBar: CBottomBar(),
     );
   }
 
   void updatex() async {
     var todoDB = TodoDBHandler();
-    var p = await todoDB.selectAllTodos();
-    var t = await todoDB.selectAllCTodos();
+    var p = await todoDB.selectAllTodos(0);
+    var t = await todoDB.selectAllTodos(1);
     setState(() {
       x = p;
       l = 0;
@@ -115,16 +151,27 @@ class _TodoListState extends State<TodoList> {
       cl = 0;
       for (Map<String, dynamic> data in x) {
         l++;
+        print(data);
       }
       for (Map<String, dynamic> data in cx) {
         cl++;
+        print(data);
       }
     });
   }
 
-  void completed(int y, int z) async {
+  Future<bool> completed(int y, int z) async {
     var todoDB = TodoDBHandler();
-    await todoDB.update(y, z);
+    var i = await todoDB.update(y, z);
     updatex();
+    return i;
+  }
+
+  Future<bool> delete(int y) async {
+    var todoDB = TodoDBHandler();
+    var i = await todoDB.delete(y);
+
+    updatex();
+    return i;
   }
 }

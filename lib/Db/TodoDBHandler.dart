@@ -68,26 +68,36 @@ class TodoDBHandler {
     return todo.id;
   }
 
-  void update(int id, int complete) async {
+  Future<bool> update(int id, int complete) async {
     final Database db = await database;
     if (id != -1) {
       var updateid = id;
       await db.rawUpdate('''UPDATE todos SET iscompleted = ? WHERE id =?''',
           [complete, updateid]);
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> delete(int id) async {
+    final Database db = await database;
+    try {
+      if (id == -2) {
+        await db.delete("todos", where: "iscomplete=?", whereArgs: [1]);
+      } else {
+        await db.delete("todos", where: "id=?", whereArgs: [id]);
+      }
+      return true;
+    } catch (Error) {
+      print("Error deleting id=${id} :${Error.toString()}");
+      return false;
     }
   }
 
-  Future<List<Map<String, dynamic>>> selectAllTodos() async {
+  Future<List<Map<String, dynamic>>> selectAllTodos(int iscomplete) async {
     final Database db = await database;
     var data = db.query("todos",
-        orderBy: "id desc", where: "iscompleted=?", whereArgs: [0]);
-    return data;
-  }
-
-  Future<List<Map<String, dynamic>>> selectAllCTodos() async {
-    final Database db = await database;
-    var data = db.query("todos",
-        orderBy: "id desc", where: "iscompleted=?", whereArgs: [1]);
+        orderBy: "id desc", where: "iscompleted=?", whereArgs: [iscomplete]);
     return data;
   }
 }
